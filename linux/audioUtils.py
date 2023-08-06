@@ -9,32 +9,57 @@ MUTE_STATUS_REGEX=r'(^\s{4}Prop:\skey\sSpa:Pod:Object:Param:Props:mute.*(\r\n|\r
 # id=$(pw-dump | jq '.[] | select(.type == "PipeWire:Interface:Node") | select(.info.props["application.name"] == "Scream") | .id')
 # pw-cli e <clientID> Props
 
-def GetNodeID(name: str) -> int:
+def GetNodeID(name: str) -> int or list[int]:
     output = subprocess.run(['echo -n $(pw-dump | jq \'.[] | select(.type == "PipeWire:Interface:Node") | select(.info.props["application.name"] == "' + name + '") | .id\')'], shell=True, capture_output=True)
-    return int(output.stdout.decode('UTF-8'))
+    nodes = output.stdout.decode('UTF-8')
 
-def SetVolume(nodeId: int, volume: int):
+    if(nodes.find(" ") > -1):
+        nodesArray = nodes.split(" ")
+    else:
+        return [int(nodes)]
+
+    # only return the first audio device (audio out) if its discord because the second one is the mic
+    if(name == "WEBRTC VoiceEngine"):
+        return [int(nodesArray[0])]
+    
+    return list(map(int, nodesArray))
+
+def _SetVolume(nodeId: int, volume: int):
     internalVolume = audioMapping.GetFloatValue(volume)
     output = subprocess.run(["pw-cli set-param "+ str(nodeId) +" Props '{ mute: false, channelVolumes: ["+ str(internalVolume) +", "+ str(internalVolume) +"] }'"], shell=True, capture_output=True)
     print(output.stdout.decode('UTF-8'))
 
-def GetVolume(nodeId: int) -> int:
+def SetVolume(nodeId: list[int], volume: int):
+    for node in nodeId:
+        _SetVolume(node, volume)
+
+def _GetVolume(nodeId: int) -> int:
     output = subprocess.run(["pw-cli e " + str(nodeId) + " Props"], shell=True, capture_output=True)
     regex = re.compile(VOLUME_LEVEL_REGEX, re.MULTILINE)
     result = re.findall(regex, output.stdout.decode('UTF-8'))
     audioLevel = result[0][4].strip()
     return audioMapping.GetIntVlaue(float(audioLevel[6:]))
 
-def GetMuteStatus(nodeId: int) -> bool:
+def GetVolume(nodeId: list[int]) -> int:
+    return _GetVolume(nodeId[0])
+
+def _GetMuteStatus(nodeId: int) -> bool:
     output = subprocess.run(["pw-cli e " + str(nodeId) + " Props"], shell=True, capture_output=True)
     regex = re.compile(MUTE_STATUS_REGEX, re.MULTILINE)
     result = re.findall(regex, output.stdout.decode('UTF-8'))
     muteStatus = result[0][2].strip()
     return muteStatus[5:].lower() == "true"
 
-def ToggleMute(nodeId: int):
+def GetMuteStatus(nodeId: int) -> bool:
+    return _GetMuteStatus(nodeId[0])
+
+def _ToggleMute(nodeId: int):
     output = subprocess.run(["pw-cli set-param "+ str(nodeId) +" Props '{ mute: "+ ("true" if GetMuteStatus(nodeId) == False else "false") +"}'"], shell=True, capture_output=True)
     print(output.stdout.decode('UTF-8'))
+
+def ToggleMute(nodeId: list[int]):
+    for node in nodeId:
+        _ToggleMute(node)
 
 def createMapping():
     id = GetNodeID("Scream")
