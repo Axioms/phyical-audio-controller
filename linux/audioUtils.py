@@ -54,12 +54,24 @@ def GetMuteStatus(nodeId: int) -> bool:
     return _GetMuteStatus(nodeId[0])
 
 def _ToggleMute(nodeId: int):
-    output = subprocess.run(["pw-cli set-param "+ str(nodeId) +" Props '{ mute: "+ ("true" if GetMuteStatus(nodeId) == False else "false") +"}'"], shell=True, capture_output=True)
+    output = subprocess.run(["pw-cli set-param "+ str(nodeId) +" Props '{ mute: "+ ("true" if _GetMuteStatus(nodeId) == False else "false") +"}'"], shell=True, capture_output=True)
     print(output.stdout.decode('UTF-8'))
 
 def ToggleMute(nodeId: list[int]):
     for node in nodeId:
         _ToggleMute(node)
+
+def GetDefaultSinkVolume() -> int:
+    output = subprocess.run(["pactl get-sink-volume @DEFAULT_SINK@"], shell=True, capture_output=True)
+    return int(output.stdout.decode('UTF-8').split(' / ')[1][:-1])
+
+def SetDefaultSinkVolume(volume: int):
+    output = subprocess.run(["pactl set-sink-volume @DEFAULT_SINK@ " + str(volume) + "%"], shell=True, capture_output=True)
+    print(output.stdout.decode('UTF-8'))
+
+def ToggleDefaultSinkMute():
+    output = subprocess.run(["pactl set-sink-mute @DEFAULT_SINK@ toggle"], shell=True, capture_output=True)
+    print(output.stdout.decode('UTF-8'))
 
 def createMapping():
     id = GetNodeID("Scream")
@@ -75,15 +87,16 @@ def createMapping():
         time.sleep(0.1)
 
 if __name__ == '__main__':
+    GetDefaultSinkVolume()
     # execute only if run as the entry point into the program
-    id = GetNodeID("Scream")
-    ToggleMute(id)
-    ToggleMute(id)
-    GetMuteStatus(id)
-    print(GetVolume(id))
-    SetVolume(id, 50)
-    print(GetVolume(id))
-    SetVolume(id, 26)
-    print(GetVolume(id))
+    #id = GetNodeID("Scream")
+    #ToggleMute(id)
+    #ToggleMute(id)
+    #GetMuteStatus(id)
+    #print(GetVolume(id))
+    #SetVolume(id, 50)
+    #print(GetVolume(id))
+    #SetVolume(id, 26)
+    #print(GetVolume(id))
     #createMapping()
     

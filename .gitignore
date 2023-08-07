@@ -1,1 +1,3 @@
 arduino-nano/build
+.linux-venv
+**/__pycache__
