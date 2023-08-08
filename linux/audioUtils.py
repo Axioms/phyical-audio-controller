@@ -9,20 +9,23 @@ MUTE_STATUS_REGEX=r'(^\s{4}Prop:\skey\sSpa:Pod:Object:Param:Props:mute.*(\r\n|\r
 # id=$(pw-dump | jq '.[] | select(.type == "PipeWire:Interface:Node") | select(.info.props["application.name"] == "Scream") | .id')
 # pw-cli e <clientID> Props
 
-def GetNodeID(name: str) -> int or list[int]:
-    output = subprocess.run(['echo -n $(pw-dump | jq \'.[] | select(.type == "PipeWire:Interface:Node") | select(.info.props["application.name"] == "' + name + '") | .id\')'], shell=True, capture_output=True)
-    nodes = output.stdout.decode('UTF-8')
+def GetNodeID(name: str) -> list[int]:
+    try:
+        output = subprocess.run(['echo -n $(pw-dump | jq \'.[] | select(.type == "PipeWire:Interface:Node") | select(.info.props["application.name"] == "' + name + '") | .id\')'], shell=True, capture_output=True)
+        nodes = output.stdout.decode('UTF-8')
 
-    if(nodes.find(" ") > -1):
-        nodesArray = nodes.split(" ")
-    else:
-        return [int(nodes)]
+        if(nodes.find(" ") > -1):
+            nodesArray = nodes.split(" ")
+        else:
+            return [int(nodes)]
 
-    # only return the first audio device (audio out) if its discord because the second one is the mic
-    if(name == "WEBRTC VoiceEngine"):
-        return [int(nodesArray[0])]
-    
-    return list(map(int, nodesArray))
+        # only return the first audio device (audio out) if its discord because the second one is the mic
+        if(name == "WEBRTC VoiceEngine"):
+            return [int(nodesArray[0])]
+
+        return list(map(int, nodesArray))
+    except:
+        return [-1]
 
 def _SetVolume(nodeId: int, volume: int):
     internalVolume = audioMapping.GetFloatValue(volume)

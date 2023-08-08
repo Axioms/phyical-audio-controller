@@ -8,9 +8,12 @@
 
 #define SEESAW_BASE_ADDR 0x36 // I2C address, starts with 0x36
 #define DEBOUNCE_BUTTON_PRESS_MILLS 5000
+#define BAUDRATE 1000000
+#define ENCODER_AMOUNT 5
+
 /*********
  * {
- *   "a": "volume",  // Action volume/press
+ *   "a": "volume",  // Action volume/press/reset
  *   "v": 100,       // volume 0-100
  *   "p": false,     // pressed true/false
  *   "e": 0          // encoder #
@@ -18,15 +21,16 @@
  ***********/
 
 // create 5 encoders!
-Adafruit_seesaw encoders[5];
+Adafruit_seesaw encoders[ENCODER_AMOUNT];
 // create 5 encoder pixels
-seesaw_NeoPixel encoder_pixels[5] = {
+seesaw_NeoPixel encoder_pixels[ENCODER_AMOUNT] = {
     seesaw_NeoPixel(1, SS_NEOPIX, NEO_GRB + NEO_KHZ800),
     seesaw_NeoPixel(1, SS_NEOPIX, NEO_GRB + NEO_KHZ800),
     seesaw_NeoPixel(1, SS_NEOPIX, NEO_GRB + NEO_KHZ800),
     seesaw_NeoPixel(1, SS_NEOPIX, NEO_GRB + NEO_KHZ800),
     seesaw_NeoPixel(1, SS_NEOPIX, NEO_GRB + NEO_KHZ800)};
-
+void Seed();
+void splitStringToVector(String msg);
 bool previouslyPressed = false;
 unsigned long previouslyPressedTime;
 StaticJsonDocument<64> resultJson;
@@ -35,7 +39,7 @@ bool found_encoders[] = {false, false, false, false, false};
 
 void setup()
 {
-  Serial.begin(2000000);
+  Serial.begin(BAUDRATE);
 
   // wait for serial port to open
   while (!Serial)
@@ -51,25 +55,25 @@ void setup()
     if (!encoders[enc].begin(SEESAW_BASE_ADDR + enc) ||
         !encoder_pixels[enc].begin(SEESAW_BASE_ADDR + enc))
     {
-      Serial.print("Couldn't find encoder #");
-      Serial.println(enc);
+      // Serial.print("Couldn't find encoder #");
+      // Serial.println(enc);
     }
     else
     {
-      Serial.print("Found encoder + pixel #");
-      Serial.println(enc);
+      // Serial.print("Found encoder + pixel #");
+      // Serial.println(enc);
 
       uint32_t version = ((encoders[enc].getVersion() >> 16) & 0xFFFF);
       if (version != 4991)
       {
-        Serial.print("Wrong firmware loaded? ");
-        Serial.println(version);
+        // Serial.print("Wrong firmware loaded? ");
+        // Serial.println(version);
         while (1)
         {
           delay(10);
         }
       }
-      Serial.println("Found Product 4991");
+      // Serial.println("Found Product 4991");
 
       // use a pin for the built in encoder switch
       encoders[enc].pinMode(SS_SWITCH, INPUT_PULLUP);
@@ -91,11 +95,17 @@ void setup()
   }
 
   Serial.println("Encoders started");
+  resultJson["a"] = "reset";
+  serializeJson(resultJson, Serial);
+  resultJson.clear();
+  Serial.println();
+  delay(100);
+  yield();
+  pullSeedValues();
 }
 
 void loop()
 {
-
   for (uint8_t enc = 0; enc < sizeof(found_encoders); enc++)
   {
     if (found_encoders[enc] == false)
@@ -104,12 +114,12 @@ void loop()
     int32_t new_position = encoders[enc].getEncoderPosition();
     // did we move around?
 
-    if (new_position > 100)
+    if (new_position > 99)
     {
       encoders[enc].setEncoderPosition(100);
       new_position = encoders[enc].getEncoderPosition();
     }
-    else if (new_position < 0)
+    else if (new_position < 1)
     {
       encoders[enc].setEncoderPosition(0);
       new_position = encoders[enc].getEncoderPosition();
@@ -122,6 +132,7 @@ void loop()
       resultJson["p"] = false;
       resultJson["e"] = enc;
       serializeJson(resultJson, Serial);
+      Serial.println();
       resultJson.clear();
       // Serial.print("Encoder #");
       // Serial.print(enc);
@@ -138,7 +149,7 @@ void loop()
     {
       if (previouslyPressed)
       {
-        if(previouslyPressedTime + DEBOUNCE_BUTTON_PRESS_MILLS <= millis())
+        if (previouslyPressedTime + DEBOUNCE_BUTTON_PRESS_MILLS <= millis())
         {
           previouslyPressed = false;
           previouslyPressedTime = 0;
@@ -153,6 +164,7 @@ void loop()
         resultJson["p"] = true;
         resultJson["e"] = enc;
         serializeJson(resultJson, Serial);
+        Serial.println();
         resultJson.clear();
       }
     }
@@ -177,4 +189,37 @@ uint32_t Wheel(byte WheelPos)
   }
   WheelPos -= 170;
   return seesaw_NeoPixel::Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
+void splitStringToVector(String msg)
+{
+  int pos;
+  int j, k = 0;
+  for (int i = 0; i < msg.length(); i++)
+  {
+    if (msg.charAt(i) == '|')
+    {
+      pos = atoi(msg.substring(j, i).c_str());
+      encoders[k].setEncoderPosition(pos);
+      encoder_pixels[k].setPixelColor(0, Wheel(((pos + 1) * 4) & 0xFF));
+      j = i + 1;
+      k++;
+      Serial.println(("Set Encoder #" + k + ' to POS: ' + pos));
+    }
+  }
+  pos = atoi(msg.substring(j, msg.length()).c_str());
+  encoders[k].setEncoderPosition((pos)); // to grab the last value of the string
+  encoder_pixels[k].setPixelColor(0, Wheel(((pos + 1) * 4) & 0xFF));
+  Serial.println("Set Encoder #" + k + ' to POS: ' + pos);
+
+}
+
+void pullSeedValues()
+{
+  Serial.println("Waiting for host...");
+  while (Serial.available() == 0) { }
+  String seedValues = Serial.readString();
+  Serial.println("Host Reply reseaved...");
+  Serial.println("Seed Values: " + seedValues.substring(1, seedValues.length() - 1));
+  splitStringToVector(seedValues.substring(1, seedValues.length() - 1));
 }
