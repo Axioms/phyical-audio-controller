@@ -173,14 +173,21 @@ void loop()
 
   // Timer For Syncing Audio
   unsigned long CurrentTimeDelta = millis() - lastSyncTime;
-  //Serial.println(CurrentTimeDelta);
-  // Fix timer if overflow happens
-  if(CurrentTimeDelta < 0)
+  // Serial.println(CurrentTimeDelta);
+  //  Fix timer if overflow happens
+  if (CurrentTimeDelta < 0)
   {
     lastSyncTime = millis();
   }
-  else if( CurrentTimeDelta > SYNC_INTERVAL) 
+  else if (CurrentTimeDelta > SYNC_INTERVAL)
   {
+    Serial.println("Encoders started");
+    resultJson["a"] = "sync";
+    serializeJson(resultJson, Serial);
+    resultJson.clear();
+    Serial.println();
+    delay(100);
+    yield();
     pullSeedValues();
   }
 
@@ -214,27 +221,28 @@ void splitStringToVector(String msg)
   {
     if (msg.charAt(i) == '|')
     {
-      //Serial.println("---" + k);
+      // Serial.println("---" + k);
       pos = atoi(msg.substring(j, i).c_str());
       encoders[k].setEncoderPosition(pos);
-      encoder_pixels[k].setPixelColor(0, Wheel(((pos) * 4) & 0xFF));
+      encoder_pixels[k].setPixelColor(0, Wheel(((pos)*4) & 0xFF));
       j = i + 1;
       k++;
-      //Serial.println(("Set Encoder #" + k + ' to POS: ' + pos));
+      // Serial.println(("Set Encoder #" + k + ' to POS: ' + pos));
     }
-      delay(10);
+    delay(10);
   }
   pos = atoi(msg.substring(j, msg.length()).c_str());
   encoders[k].setEncoderPosition((pos)); // to grab the last value of the string
-  encoder_pixels[k].setPixelColor(0, Wheel(((pos) * 4) & 0xFF));
-  //Serial.println("Set Encoder #" + k + ' to POS: ' + pos);
-
+  encoder_pixels[k].setPixelColor(0, Wheel(((pos)*4) & 0xFF));
+  // Serial.println("Set Encoder #" + k + ' to POS: ' + pos);
 }
 
 void pullSeedValues()
 {
   Serial.println("Waiting for host...");
-  while (Serial.available() == 0) { }
+  while (Serial.available() == 0)
+  {
+  }
   String seedValues = Serial.readString();
   Serial.println("Host Reply reseaved...");
   Serial.println("Seed Values: " + seedValues.substring(1, seedValues.length() - 1));
