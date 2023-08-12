@@ -10,10 +10,11 @@
 #define DEBOUNCE_BUTTON_PRESS_MILLS 5000
 #define BAUDRATE 1000000
 #define ENCODER_AMOUNT 5
+#define SYNC_INTERVAL 60000
 
 /*********
  * {
- *   "a": "volume",  // Action volume/press/reset
+ *   "a": "volume",  // Action volume/press/sync
  *   "v": 100,       // volume 0-100
  *   "p": false,     // pressed true/false
  *   "e": 0          // encoder #
@@ -36,7 +37,7 @@ unsigned long previouslyPressedTime;
 StaticJsonDocument<64> resultJson;
 int32_t encoder_positions[] = {0, 0, 0, 0, 0};
 bool found_encoders[] = {false, false, false, false, false};
-
+unsigned long lastSyncTime;
 void setup()
 {
   Serial.begin(BAUDRATE);
@@ -95,7 +96,7 @@ void setup()
   }
 
   Serial.println("Encoders started");
-  resultJson["a"] = "reset";
+  resultJson["a"] = "sync";
   serializeJson(resultJson, Serial);
   resultJson.clear();
   Serial.println();
@@ -170,6 +171,19 @@ void loop()
     }
   }
 
+  // Timer For Syncing Audio
+  unsigned long CurrentTimeDelta = millis() - lastSyncTime;
+  //Serial.println(CurrentTimeDelta);
+  // Fix timer if overflow happens
+  if(CurrentTimeDelta < 0)
+  {
+    lastSyncTime = millis();
+  }
+  else if( CurrentTimeDelta > SYNC_INTERVAL) 
+  {
+    pullSeedValues();
+  }
+
   // don't overwhelm serial port
   yield();
   delay(10);
@@ -194,23 +208,26 @@ uint32_t Wheel(byte WheelPos)
 void splitStringToVector(String msg)
 {
   int pos;
-  int j, k = 0;
+  int j = 0;
+  int k = 0;
   for (int i = 0; i < msg.length(); i++)
   {
     if (msg.charAt(i) == '|')
     {
+      //Serial.println("---" + k);
       pos = atoi(msg.substring(j, i).c_str());
       encoders[k].setEncoderPosition(pos);
-      encoder_pixels[k].setPixelColor(0, Wheel(((pos + 1) * 4) & 0xFF));
+      encoder_pixels[k].setPixelColor(0, Wheel(((pos) * 4) & 0xFF));
       j = i + 1;
       k++;
-      Serial.println(("Set Encoder #" + k + ' to POS: ' + pos));
+      //Serial.println(("Set Encoder #" + k + ' to POS: ' + pos));
     }
+      delay(10);
   }
   pos = atoi(msg.substring(j, msg.length()).c_str());
   encoders[k].setEncoderPosition((pos)); // to grab the last value of the string
-  encoder_pixels[k].setPixelColor(0, Wheel(((pos + 1) * 4) & 0xFF));
-  Serial.println("Set Encoder #" + k + ' to POS: ' + pos);
+  encoder_pixels[k].setPixelColor(0, Wheel(((pos) * 4) & 0xFF));
+  //Serial.println("Set Encoder #" + k + ' to POS: ' + pos);
 
 }
 
@@ -222,4 +239,5 @@ void pullSeedValues()
   Serial.println("Host Reply reseaved...");
   Serial.println("Seed Values: " + seedValues.substring(1, seedValues.length() - 1));
   splitStringToVector(seedValues.substring(1, seedValues.length() - 1));
+  lastSyncTime = millis();
 }

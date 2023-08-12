@@ -43,7 +43,7 @@ while True:
                 else:
                     nodeId = audio.GetNodeID(NodeNames[jsonText["e"]])
                     audio.ToggleMute(nodeId)
-            elif(jsonText["a"] == "reset"):
+            elif(jsonText["a"] == "sync"):
                 data = proccessReset()
                 serial.write(data)
             print(jsonText)
