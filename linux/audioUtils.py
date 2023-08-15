@@ -30,7 +30,7 @@ def GetNodeID(name: str) -> list[int]:
 def _SetVolume(nodeId: int, volume: int):
     internalVolume = audioMapping.GetFloatValue(volume)
     output = subprocess.run(["pw-cli set-param "+ str(nodeId) +" Props '{ mute: false, channelVolumes: ["+ str(internalVolume) +", "+ str(internalVolume) +"] }'"], shell=True, capture_output=True)
-    print(output.stdout.decode('UTF-8'))
+    #print(output.stdout.decode('UTF-8'))
 
 def SetVolume(nodeId: list[int], volume: int):
     for node in nodeId:
@@ -58,7 +58,7 @@ def GetMuteStatus(nodeId: int) -> bool:
 
 def _ToggleMute(nodeId: int):
     output = subprocess.run(["pw-cli set-param "+ str(nodeId) +" Props '{ mute: "+ ("true" if _GetMuteStatus(nodeId) == False else "false") +"}'"], shell=True, capture_output=True)
-    print(output.stdout.decode('UTF-8'))
+    #print(output.stdout.decode('UTF-8'))
 
 def ToggleMute(nodeId: list[int]):
     for node in nodeId:
@@ -70,11 +70,11 @@ def GetDefaultSinkVolume() -> int:
 
 def SetDefaultSinkVolume(volume: int):
     output = subprocess.run(["pactl set-sink-volume @DEFAULT_SINK@ " + str(volume) + "%"], shell=True, capture_output=True)
-    print(output.stdout.decode('UTF-8'))
+    #print(output.stdout.decode('UTF-8'))
 
 def ToggleDefaultSinkMute():
     output = subprocess.run(["pactl set-sink-mute @DEFAULT_SINK@ toggle"], shell=True, capture_output=True)
-    print(output.stdout.decode('UTF-8'))
+    #print(output.stdout.decode('UTF-8'))
 
 def createMapping():
     id = GetNodeID("Scream")
@@ -85,7 +85,7 @@ def createMapping():
         volume = GetVolume(id)
         if(oldVolume != volume):
             oldVolume = volume
-            print(str(volumeLevel) + ", " + str(volume))
+            #print(str(volumeLevel) + ", " + str(volume))
             volumeLevel -= 1
         time.sleep(0.1)
 

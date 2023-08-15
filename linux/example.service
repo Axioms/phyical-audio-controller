@@ -1,0 +1,15 @@
+[Unit]
+Description=Physical Audio Manager
+After=network.target
+
+[Service]
+Type=simple
+Environment="PYTHONUNBUFFERED=1"
+WorkingDirectory={path to git root}
+Environment=PYTHONPATH={path to git root}
+ExecStart={path to git root}/.linux-venv/bin/python linux/main.py
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=default.target
