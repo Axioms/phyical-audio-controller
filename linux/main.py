@@ -17,7 +17,7 @@ def proccessReset():
                 audioLevels.append(str(audio.GetVolume(nodeId)))
             else:
                 audioLevels.append("0")
-    return ( "<" + ("|".join(audioLevels)) + ">").encode('utf-8')
+    return ( "<" + (",".join(audioLevels)) + ">").encode('utf-8')
 
 while True:
     if serial is None:

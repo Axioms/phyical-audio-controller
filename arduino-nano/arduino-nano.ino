@@ -35,7 +35,7 @@ void splitStringToVector(String msg);
 bool previouslyPressed = false;
 unsigned long previouslyPressedTime;
 StaticJsonDocument<64> resultJson;
-int32_t encoder_positions[] = {0, 0, 0, 0, 0};
+int32_t encoder_positions[] = {-100, -100, -100, -100, -100};
 bool found_encoders[] = {false, false, false, false, false};
 unsigned long lastSyncTime;
 unsigned long CurrentTimeDelta;
@@ -117,12 +117,12 @@ void loop()
     int32_t new_position = encoders[enc].getEncoderPosition();
     // did we move around?
 
-    if (new_position > 99)
+    if (new_position < -99)
     {
-      encoders[enc].setEncoderPosition(100);
+      encoders[enc].setEncoderPosition(-100);
       new_position = encoders[enc].getEncoderPosition();
     }
-    else if (new_position < 1)
+    else if (new_position > -1)
     {
       encoders[enc].setEncoderPosition(0);
       new_position = encoders[enc].getEncoderPosition();
@@ -131,7 +131,7 @@ void loop()
     if (encoder_positions[enc] != new_position)
     {
       resultJson["a"] = "volume";
-      resultJson["v"] = new_position;
+      resultJson["v"] = -1 * new_position;
       resultJson["p"] = false;
       resultJson["e"] = enc;
       serializeJson(resultJson, Serial);
@@ -226,11 +226,11 @@ void splitStringToVector(String msg)
   int k = 0;
   for (int i = 0; i < msg.length(); i++)
   {
-    if (msg.charAt(i) == '|')
+    if (msg.charAt(i) == ',')
     {
       // Serial.println("---" + k);
       pos = atoi(msg.substring(j, i).c_str());
-      encoders[k].setEncoderPosition(pos);
+      encoders[k].setEncoderPosition(pos - 100);
       encoder_pixels[k].setPixelColor(0, Wheel(((pos)*4) & 0xFF));
       j = i + 1;
       k++;
@@ -239,7 +239,7 @@ void splitStringToVector(String msg)
     delay(10);
   }
   pos = atoi(msg.substring(j, msg.length()).c_str());
-  encoders[k].setEncoderPosition((pos)); // to grab the last value of the string
+  encoders[k].setEncoderPosition((pos - 100)); // to grab the last value of the string
   encoder_pixels[k].setPixelColor(0, Wheel(((pos)*4) & 0xFF));
   // Serial.println("Set Encoder #" + k + ' to POS: ' + pos);
 }
