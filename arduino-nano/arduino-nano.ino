@@ -230,7 +230,7 @@ void splitStringToVector(String msg)
     {
       // Serial.println("---" + k);
       pos = atoi(msg.substring(j, i).c_str());
-      encoders[k].setEncoderPosition(pos - 100);
+      encoders[k].setEncoderPosition(pos * -1);
       encoder_pixels[k].setPixelColor(0, Wheel(((pos)*4) & 0xFF));
       j = i + 1;
       k++;
@@ -239,7 +239,7 @@ void splitStringToVector(String msg)
     delay(10);
   }
   pos = atoi(msg.substring(j, msg.length()).c_str());
-  encoders[k].setEncoderPosition((pos - 100)); // to grab the last value of the string
+  encoders[k].setEncoderPosition((pos * -1)); // to grab the last value of the string
   encoder_pixels[k].setPixelColor(0, Wheel(((pos)*4) & 0xFF));
   // Serial.println("Set Encoder #" + k + ' to POS: ' + pos);
 }
