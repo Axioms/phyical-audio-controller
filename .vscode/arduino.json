@@ -4,4 +4,5 @@
     "port": "/dev/ttyUSB0",
     "sketch": "arduino-nano/arduino-nano.ino",
     "output": "./arduino-nano/build"
+    
 }
