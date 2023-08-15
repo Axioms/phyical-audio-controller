@@ -7,7 +7,7 @@
 #define SS_NEOPIX 6  // this is the pin on the encoder connected to neopixel
 
 #define SEESAW_BASE_ADDR 0x36 // I2C address, starts with 0x36
-#define DEBOUNCE_BUTTON_PRESS_MILLS 5000
+#define DEBOUNCE_BUTTON_PRESS_MILLS 1000
 #define BAUDRATE 1000000
 #define ENCODER_AMOUNT 5
 #define SYNC_INTERVAL 60000
@@ -38,6 +38,8 @@ StaticJsonDocument<64> resultJson;
 int32_t encoder_positions[] = {0, 0, 0, 0, 0};
 bool found_encoders[] = {false, false, false, false, false};
 unsigned long lastSyncTime;
+unsigned long CurrentTimeDelta;
+
 void setup()
 {
   Serial.begin(BAUDRATE);
@@ -150,10 +152,15 @@ void loop()
     {
       if (previouslyPressed)
       {
-        if (previouslyPressedTime + DEBOUNCE_BUTTON_PRESS_MILLS <= millis())
+        CurrentTimeDelta = millis() - previouslyPressedTime;
+        if (CurrentTimeDelta >= DEBOUNCE_BUTTON_PRESS_MILLS)
         {
           previouslyPressed = false;
           previouslyPressedTime = 0;
+        }
+        else if(CurrentTimeDelta < 0)
+        {
+          previouslyPressedTime = millis();
         }
       }
       else
@@ -172,7 +179,7 @@ void loop()
   }
 
   // Timer For Syncing Audio
-  unsigned long CurrentTimeDelta = millis() - lastSyncTime;
+  CurrentTimeDelta = millis() - lastSyncTime;
   // Serial.println(CurrentTimeDelta);
   //  Fix timer if overflow happens
   if (CurrentTimeDelta < 0)
