@@ -59,7 +59,6 @@ def SeedValues(data):
     values = data[(seed_index + 13):].split(",")
     for value in range(len(values)):
         labels[value].text = padString(values[value], 3)
-        time.sleep(1)
 
 while True:
     text = uart.readline()
