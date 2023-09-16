@@ -4,7 +4,7 @@ import json
 import audioUtils as audio
 serial: Serial = None
 # Use @@ for default sink
-NodeNames = ["@@","spotify","Firefox", "WEBRTC VoiceEngine","Scream"]
+NodeNames = ["@@","spotify","Firefox", "WEBRTC VoiceEngine","Looking Glass"]
 
 def proccessReset():
     audioLevels = []

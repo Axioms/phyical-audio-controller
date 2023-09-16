@@ -14,6 +14,12 @@ def GetNodeID(name: str) -> list[int]:
         output = subprocess.run(['echo -n $(pw-dump | jq \'.[] | select(.type == "PipeWire:Interface:Node") | select(.info.props["application.name"] == "' + name + '") | .id\')'], shell=True, capture_output=True)
         nodes = output.stdout.decode('UTF-8')
 
+        # if application name lookup fails try node name lookup
+        if(len(nodes.strip()) < 1):
+            output = subprocess.run(['echo -n $(pw-dump | jq \'.[] | select(.type == "PipeWire:Interface:Node") | select(.info.props["node.name"] == "' + name + '") | .id\')'], shell=True, capture_output=True)
+            nodes = output.stdout.decode('UTF-8')
+
+
         if(nodes.find(" ") > -1):
             nodesArray = nodes.split(" ")
         else:
