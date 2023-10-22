@@ -100,8 +100,8 @@ void setup()
   //Serial.println("Encoders started");
   resultJson["a"] = "sync";
   serializeJson(resultJson, Serial);
-  resultJson.clear();
   Serial.println();
+  resultJson.clear();
   delay(100);
   yield();
   pullSeedValues();
@@ -181,15 +181,15 @@ void loop()
   //  Fix timer if overflow happens
   if (CurrentTimeDelta < 0)
   {
-    lastSyncTime = millis();
+    lastSyncTime = 0;
   }
   else if (CurrentTimeDelta > SYNC_INTERVAL)
   {
     //Serial.println("Encoders started");
     resultJson["a"] = "sync";
     serializeJson(resultJson, Serial);
-    resultJson.clear();
     Serial.println();
+    resultJson.clear();
     pullSeedValues();
   }
 
