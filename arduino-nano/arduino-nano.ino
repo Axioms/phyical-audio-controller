@@ -39,6 +39,7 @@ int32_t encoder_positions[] = {-100, -100, -100, -100, -100};
 bool found_encoders[] = {false, false, false, false, false};
 unsigned long lastSyncTime;
 unsigned long CurrentTimeDelta;
+void(* resetFunc) (void) = 0;
 
 void setup()
 {
@@ -109,6 +110,10 @@ void setup()
 
 void loop()
 {
+  if(!Serial)
+  {
+    resetFunc();
+  }
   for (uint8_t enc = 0; enc < sizeof(found_encoders); enc++)
   {
     if (found_encoders[enc] == false)
