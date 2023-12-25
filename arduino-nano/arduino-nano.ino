@@ -11,6 +11,7 @@
 #define BAUDRATE 1000000
 #define ENCODER_AMOUNT 5
 #define SYNC_INTERVAL 10000
+#define RESET_INTERVAL 3600000
 
 /*********
  * {
@@ -110,10 +111,6 @@ void setup()
 
 void loop()
 {
-  if(!Serial)
-  {
-    resetFunc();
-  }
   for (uint8_t enc = 0; enc < sizeof(found_encoders); enc++)
   {
     if (found_encoders[enc] == false)
@@ -196,6 +193,11 @@ void loop()
     Serial.println();
     resultJson.clear();
     pullSeedValues();
+  }
+
+  if(millis() > RESET_INTERVAL)
+  {
+    resetFunc();
   }
 
   // don't overwhelm serial port
