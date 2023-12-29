@@ -5,13 +5,13 @@
 
 #define SS_SWITCH 24 // this is the pin on the encoder connected to switch
 #define SS_NEOPIX 6  // this is the pin on the encoder connected to neopixel
-
+#define RESETPIN 8  // this is the reset power pin
 #define SEESAW_BASE_ADDR 0x36 // I2C address, starts with 0x36
 #define DEBOUNCE_BUTTON_PRESS_MILLS 1000
 #define BAUDRATE 1000000
 #define ENCODER_AMOUNT 5
 #define SYNC_INTERVAL 10000
-#define RESET_INTERVAL 3600000
+#define RESET_INTERVAL 600000
 
 /*********
  * {
@@ -40,10 +40,12 @@ int32_t encoder_positions[] = {-100, -100, -100, -100, -100};
 bool found_encoders[] = {false, false, false, false, false};
 unsigned long lastSyncTime;
 unsigned long CurrentTimeDelta;
-void(* resetFunc) (void) = 0;
 
 void setup()
 {
+  digitalWrite(RESETPIN, HIGH);
+  delay(200);
+  pinMode(RESETPIN, OUTPUT);
   Serial.begin(BAUDRATE);
 
   // wait for serial port to open
@@ -51,7 +53,6 @@ void setup()
   {
     delay(10);
   }
-
   //Serial.println("Looking for seesaws!");
 
   for (uint8_t enc = 0; enc < sizeof(found_encoders); enc++)
@@ -197,7 +198,7 @@ void loop()
 
   if(millis() > RESET_INTERVAL)
   {
-    resetFunc();
+    digitalWrite(RESETPIN, LOW);
   }
 
   // don't overwhelm serial port
