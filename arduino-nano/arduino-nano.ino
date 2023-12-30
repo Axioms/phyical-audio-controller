@@ -2,10 +2,11 @@
 #include <seesaw_neopixel.h>
 #include <ArduinoJson.h>
 #include <time.h>
+#include <avr/wdt.h>
 
-#define SS_SWITCH 24 // this is the pin on the encoder connected to switch
-#define SS_NEOPIX 6  // this is the pin on the encoder connected to neopixel
-#define RESETPIN 8  // this is the reset power pin
+#define SS_SWITCH 24          // this is the pin on the encoder connected to switch
+#define SS_NEOPIX 6           // this is the pin on the encoder connected to neopixel
+#define RESETPIN 8            // this is the reset power pin
 #define SEESAW_BASE_ADDR 0x36 // I2C address, starts with 0x36
 #define DEBOUNCE_BUTTON_PRESS_MILLS 1000
 #define BAUDRATE 1000000
@@ -43,9 +44,7 @@ unsigned long CurrentTimeDelta;
 
 void setup()
 {
-  digitalWrite(RESETPIN, HIGH);
-  delay(200);
-  pinMode(RESETPIN, OUTPUT);
+  MCUSR = 0;
   Serial.begin(BAUDRATE);
 
   // wait for serial port to open
@@ -53,7 +52,7 @@ void setup()
   {
     delay(10);
   }
-  //Serial.println("Looking for seesaws!");
+  // Serial.println("Looking for seesaws!");
 
   for (uint8_t enc = 0; enc < sizeof(found_encoders); enc++)
   {
@@ -61,8 +60,8 @@ void setup()
     if (!encoders[enc].begin(SEESAW_BASE_ADDR + enc) ||
         !encoder_pixels[enc].begin(SEESAW_BASE_ADDR + enc))
     {
-       Serial.print("Couldn't find encoder #");
-       Serial.println(enc);
+      Serial.print("Couldn't find encoder #");
+      Serial.println(enc);
     }
     else
     {
@@ -72,8 +71,8 @@ void setup()
       uint32_t version = ((encoders[enc].getVersion() >> 16) & 0xFFFF);
       if (version != 4991)
       {
-         Serial.print("Wrong firmware loaded? ");
-         Serial.println(version);
+        Serial.print("Wrong firmware loaded? ");
+        Serial.println(version);
         while (1)
         {
           delay(10);
@@ -100,7 +99,7 @@ void setup()
     }
   }
 
-  //Serial.println("Encoders started");
+  // Serial.println("Encoders started");
   resultJson["a"] = "sync";
   serializeJson(resultJson, Serial);
   Serial.println();
@@ -158,7 +157,7 @@ void loop()
           previouslyPressed = false;
           previouslyPressedTime = 0;
         }
-        else if(CurrentTimeDelta < 0)
+        else if (CurrentTimeDelta < 0)
         {
           previouslyPressedTime = millis();
         }
@@ -188,7 +187,7 @@ void loop()
   }
   else if (CurrentTimeDelta > SYNC_INTERVAL)
   {
-    //Serial.println("Encoders started");
+    // Serial.println("Encoders started");
     resultJson["a"] = "sync";
     serializeJson(resultJson, Serial);
     Serial.println();
@@ -196,9 +195,13 @@ void loop()
     pullSeedValues();
   }
 
-  if(millis() > RESET_INTERVAL)
+  if (millis() > RESET_INTERVAL)
   {
-    digitalWrite(RESETPIN, LOW);
+    wdt_enable(WDTO_15MS);
+    for (;;)
+    {
+      // do nothing and wait for the eventual...
+    }
   }
 
   // don't overwhelm serial port
@@ -234,14 +237,14 @@ void Seed(String msg)
 
       pos = atoi(msg.substring(j, i).c_str());
       encoders[k].setEncoderPosition(pos * -1);
-      encoder_pixels[k].setPixelColor(0, Wheel(((pos)*4) & 0xFF));
+      encoder_pixels[k].setPixelColor(0, Wheel(((pos) * 4) & 0xFF));
       j = i + 1;
       k++;
     }
   }
   pos = atoi(msg.substring(j, msg.length()).c_str());
   encoders[k].setEncoderPosition((pos * -1)); // to grab the last value of the string
-  encoder_pixels[k].setPixelColor(0, Wheel(((pos)*4) & 0xFF));
+  encoder_pixels[k].setPixelColor(0, Wheel(((pos) * 4) & 0xFF));
 }
 
 void pullSeedValues()
