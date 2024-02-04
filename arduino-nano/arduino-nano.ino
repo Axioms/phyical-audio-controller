@@ -2,7 +2,6 @@
 #include <seesaw_neopixel.h>
 #include <ArduinoJson.h>
 #include <time.h>
-#include <avr/wdt.h>
 
 #define SS_SWITCH 24          // this is the pin on the encoder connected to switch
 #define SS_NEOPIX 6           // this is the pin on the encoder connected to neopixel
@@ -44,7 +43,9 @@ unsigned long CurrentTimeDelta;
 
 void setup()
 {
-  MCUSR = 0;
+  digitalWrite(RESETPIN, LOW);
+  delay(10);
+  pinMode(RESETPIN, OUTPUT);
   Serial.begin(BAUDRATE);
 
   // wait for serial port to open
@@ -197,11 +198,7 @@ void loop()
 
   if (millis() > RESET_INTERVAL)
   {
-    wdt_enable(WDTO_15MS);
-    for (;;)
-    {
-      // do nothing and wait for the eventual...
-    }
+    digitalWrite(RESETPIN, HIGH);
   }
 
   // don't overwhelm serial port
